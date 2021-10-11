@@ -1,6 +1,6 @@
 resource "azurerm_resource_group" "main" {
   location = "westus"
-  name     = "SAMPLE_A_RG"
+  name     = "SAMPLE_C_RG"
 }
 
 resource "azurerm_virtual_network" "main" {
@@ -19,14 +19,14 @@ resource "azurerm_virtual_network" "main" {
 resource "azurerm_availability_set" "main" {
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
-  name                = "sample-aset"
+  name                = "sample-cset"
 }
 
 resource "azurerm_virtual_desktop_workspace" "main" {
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
 
-  name          = "sample-workspace-a"
+  name          = "sample-workspace-c"
   friendly_name = "FriendlyName"
   description   = "A description of my workspace"
 }
@@ -61,18 +61,18 @@ resource "azurerm_virtual_desktop_application_group" "main" {
 # Potential crazy shenanigans below
 
 resource "azurerm_key_vault_secret" "hostkey" {
-  name         = "sample-a-hostkey" # "${var.rg_name}-hostkey"
+  name         = "sample-c-hostkey" # "${var.rg_name}-hostkey"
   value        = azurerm_virtual_desktop_host_pool.main.registration_info[0].token
   key_vault_id = data.azurerm_key_vault.main.id
 }
 
 resource "azurerm_storage_blob" "main" {
-  name                   = "sample_rg_a" # "${var.rg_name}"
+  name                   = "sample_rg_c" # "${var.rg_name}"
   storage_account_name   = data.azurerm_storage_account.main.name
   storage_container_name = data.azurerm_storage_container.main.name
   type                   = "Block"
   content_type           = "text/plain"
-  source_content         = "sample_rg_a,pooleddepthfirst" # "${var.rg_name},${var.hostpool_name}"
+  source_content         = "sample_rg_c,pooleddepthfirst" # "${var.rg_name},${var.hostpool_name}"
 
   depends_on = [
     azurerm_virtual_desktop_host_pool.main

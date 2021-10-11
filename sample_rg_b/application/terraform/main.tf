@@ -1,6 +1,6 @@
 resource "azurerm_resource_group" "main" {
   location = "westus"
-  name     = "SAMPLE_A_RG"
+  name     = "SAMPLE_RG_B"
 }
 
 resource "azurerm_virtual_network" "main" {
@@ -19,14 +19,14 @@ resource "azurerm_virtual_network" "main" {
 resource "azurerm_availability_set" "main" {
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
-  name                = "sample-aset"
+  name                = "sample-bset-a"
 }
 
 resource "azurerm_virtual_desktop_workspace" "main" {
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
 
-  name          = "sample-workspace-a"
+  name          = "sample-workspace-b"
   friendly_name = "FriendlyName"
   description   = "A description of my workspace"
 }
@@ -41,10 +41,6 @@ resource "azurerm_virtual_desktop_host_pool" "main" {
   type                     = "Pooled"
   maximum_sessions_allowed = 50
   load_balancer_type       = "DepthFirst"
-
-  registration_info {
-    expiration_date = timeadd(timestamp(), "12h")
-  }
 }
 
 resource "azurerm_virtual_desktop_application_group" "main" {
@@ -56,25 +52,4 @@ resource "azurerm_virtual_desktop_application_group" "main" {
   host_pool_id  = azurerm_virtual_desktop_host_pool.main.id
   friendly_name = "TestAppGroup"
   description   = "Acceptance Test: An application group"
-}
-
-# Potential crazy shenanigans below
-
-resource "azurerm_key_vault_secret" "hostkey" {
-  name         = "sample-a-hostkey" # "${var.rg_name}-hostkey"
-  value        = azurerm_virtual_desktop_host_pool.main.registration_info[0].token
-  key_vault_id = data.azurerm_key_vault.main.id
-}
-
-resource "azurerm_storage_blob" "main" {
-  name                   = "sample_rg_a" # "${var.rg_name}"
-  storage_account_name   = data.azurerm_storage_account.main.name
-  storage_container_name = data.azurerm_storage_container.main.name
-  type                   = "Block"
-  content_type           = "text/plain"
-  source_content         = "sample_rg_a,pooleddepthfirst" # "${var.rg_name},${var.hostpool_name}"
-
-  depends_on = [
-    azurerm_virtual_desktop_host_pool.main
-  ]
 }
