@@ -1,0 +1,40 @@
+---
+name: >-
+  $(System.TeamProject)-$(Build.DefinitionName)-$(Build.SourceBranchName)-$(Build.BuildID)-$(Date:yyyyMMdd)
+
+trigger: none
+
+pool:
+  vmImage: ubuntu-20.04
+
+variables:
+  - group: azure-auto-state-integration
+
+jobs:
+  - job: tf_plan
+    displayName: Terraform Plan - common
+    steps:
+    - task: terraformInstaller@0
+      inputs:
+        terraformVersion: '0.14.6'
+      displayName: Install Terraform
+
+    - task: TerraformTaskV2@2
+      inputs:
+        provider: "azurerm"
+        command: "init"
+        backendServiceArm: "AZU-ADO_DEFAULT_SVCCONN"
+        backendAzureRmResourceGroupName: $(STATE_RG_NAME)
+        backendAzureRmStorageAccountName: $(STORAGE_ACCOUNT_NAME)
+        backendAzureRmContainerName: $(STATE_CONTAINER_NAME)
+        backendAzureRmKey: 'common-infra'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/common'
+
+    - task: TerraformTaskV1@0
+      displayName: Terraform Plan
+      inputs:
+        provider: 'azurerm'
+        command: 'plan'
+        commandOptions: '-out=tfplan'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/common'
+        environmentServiceNameAzureRM: "AZU-ADO_DEFAULT_SVCCONN"
