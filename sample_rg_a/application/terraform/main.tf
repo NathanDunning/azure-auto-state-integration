@@ -1,55 +1,36 @@
-resource "azurerm_resource_group" "main" {
-  location = "westus"
-  name     = "SAMPLE_RG_A"
-}
+resource "azurerm_network_interface" "main" {
+  name                = "sample-rg-a-nic"
+  location            = data.azurerm_resource_group.main.location
+  resource_group_name = data.azurerm_resource_group.main.name
 
-resource "azurerm_virtual_network" "main" {
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
-
-  name          = "virtualNetwork1"
-  address_space = ["10.0.0.0/16"]
-
-  subnet {
-    name           = "subnet1"
-    address_prefix = "10.0.1.0/24"
+  ip_configuration {
+    name                          = "default-configuration"
+    subnet_id                     = data.azurerm_subnet.main.id
+    private_ip_address_allocation = "Dynamic"
   }
 }
 
-resource "azurerm_availability_set" "main" {
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
-  name                = "sample-aset-a"
-}
+resource "azurerm_windows_virtual_machine" "main" {
+  name                  = "sample-rg-a-vm"
+  location              = data.azurerm_resource_group.main.location
+  resource_group_name   = data.azurerm_resource_group.main.name
+  network_interface_ids = [azurerm_network_interface.main.id]
+  size                  = "Standard_B1s"
+  timezone              = "New Zealand Standard Time"
+  admin_username        = var.admin_username
+  admin_password        = var.admin_password
+  license_type          = "Windows_Client"
+  availability_set_id   = data.azurerm_availability_set.main.id
 
-resource "azurerm_virtual_desktop_workspace" "main" {
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
+  source_image_reference {
+    publisher = "MicrosoftWindowsServer"
+    offer     = "WindowsServer"
+    sku       = "2019-Datacenter"
+    version   = "latest"
+  }
 
-  name          = "sample-workspace-a"
-  friendly_name = "FriendlyName"
-  description   = "A description of my workspace"
-}
-
-resource "azurerm_virtual_desktop_host_pool" "main" {
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
-
-  name                     = "pooleddepthfirst"
-  friendly_name            = "pooleddepthfirst"
-  description              = "Acceptance Test: A pooled host pool - pooleddepthfirst"
-  type                     = "Pooled"
-  maximum_sessions_allowed = 50
-  load_balancer_type       = "DepthFirst"
-}
-
-resource "azurerm_virtual_desktop_application_group" "main" {
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
-
-  name          = "remoteappgroup"
-  type          = "RemoteApp"
-  host_pool_id  = azurerm_virtual_desktop_host_pool.main.id
-  friendly_name = "TestAppGroup"
-  description   = "Acceptance Test: An application group"
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Premium_LRS"
+  }
 }
