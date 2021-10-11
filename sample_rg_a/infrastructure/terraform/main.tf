@@ -26,7 +26,7 @@ resource "azurerm_virtual_desktop_workspace" "main" {
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
 
-  name          = "sample-workspace"
+  name          = "sample-workspace-a"
   friendly_name = "FriendlyName"
   description   = "A description of my workspace"
 }
