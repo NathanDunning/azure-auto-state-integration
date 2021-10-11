@@ -1,0 +1,59 @@
+---
+name: >-
+  $(System.TeamProject)-$(Build.DefinitionName)-$(Build.SourceBranchName)-$(Build.BuildID)-$(Date:yyyyMMdd)
+
+trigger: none
+
+pool:
+  vmImage: ubuntu-20.04
+
+parameters:
+  - name: resource_group
+    displayName: Resource Group
+    type: string
+    values:
+      - sample_rg_a
+      - sample_rg_b
+      - sample_rg_c
+
+variables:
+  - group: azure-auto-state-integration
+
+jobs:
+  - job: tf_destroy
+    displayName: Terraform Destroy - ${{ parameters.resource_group }}
+    steps:
+    - task: terraformInstaller@0
+      inputs:
+        terraformVersion: '0.14.6'
+      displayName: Install Terraform
+
+    - task: TerraformTaskV2@2
+      inputs:
+        provider: "azurerm"
+        command: "init"
+        backendServiceArm: "AZU-ADO_DEFAULT_SVCCONN"
+        backendAzureRmResourceGroupName: $(STATE_RG_NAME)
+        backendAzureRmStorageAccountName: $(STORAGE_ACCOUNT_NAME)
+        backendAzureRmContainerName: $(STATE_CONTAINER_NAME)
+        backendAzureRmKey: '${{ parameters.resource_group }}-infra'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/${{ parameters.resource_group }}/infrastructure/terraform'
+
+    - task: TerraformTaskV1@0
+      displayName: Terraform Plan
+      inputs:
+        provider: 'azurerm'
+        command: 'plan'
+        commandOptions: '-out=tfplan -destroy'
+        workingDirectory: '$(System.DefaultWorkingDirectory)/${{ parameters.resource_group }}/infrastructure/terraform'
+        environmentServiceNameAzureRM: "AZU-ADO_DEFAULT_SVCCONN"
+
+    - task: TerraformTaskV1@0
+      displayName: Terraform Apply
+      inputs:
+        provider: 'azurerm'
+        command: 'apply'
+        commandOptions: '-auto-approve tfplan'
+        environmentServiceNameAzureRM: "AZU-ADO_DEFAULT_SVCCONN"
+        workingDirectory: '$(System.DefaultWorkingDirectory)/${{ parameters.resource_group }}/infrastructure/terraform'
+
