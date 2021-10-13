@@ -1,5 +1,5 @@
 resource "azurerm_network_interface" "main" {
-  name                = "sample-rg-a-nic"
+  name                = "sample-rg-c-nic"
   location            = data.azurerm_resource_group.main.location
   resource_group_name = data.azurerm_resource_group.main.name
 
@@ -11,7 +11,7 @@ resource "azurerm_network_interface" "main" {
 }
 
 resource "azurerm_windows_virtual_machine" "main" {
-  name                  = "sample-rg-a-vm"
+  name                  = "sample-rg-c-vm"
   location              = data.azurerm_resource_group.main.location
   resource_group_name   = data.azurerm_resource_group.main.name
   network_interface_ids = [azurerm_network_interface.main.id]
