@@ -1,0 +1,55 @@
+---
+name: >-
+  $(System.TeamProject)-$(Build.DefinitionName)-$(Build.SourceBranchName)-$(Build.BuildID)-$(Date:yyyyMMdd)
+
+schedules:
+- cron: "0 11 */25 * *"
+  displayName: Midnight every 25 days
+  branches:
+    include:
+    - main
+
+trigger: none
+
+pool:
+  vmImage: ubuntu-20.04
+
+variables:
+  - group: azure-auto-state-integration
+  - name: STORAGE_ACCOUNT_NAME
+    value: eoufdastorageaccount
+  - name: STORAGE_CONTAINER_NAME
+    value: deployed-rg
+  - name: KeyVaultName
+    value: eoufda-keyvault
+  - name: SubscriptionId
+    value: ba185492-bde6-4488-9862-c5bf0fe328dd
+
+jobs:
+  - job: check_existing_groups
+    displayName: Check existing groups
+    steps:
+    - task: AzureCLI@2
+      displayName: Retrieve blobs
+      inputs:
+        azureSubscription: "AZU-ADO_DEFAULT_SVCCONN"
+        scriptType: bash
+        scriptLocation: scriptPath
+        scriptPath: '$(System.DefaultWorkingDirectory)/scheduler/get-blobs.sh'
+        #FIXME: failOnStandardError: true
+      env:
+        STORAGE_ACCOUNT_NAME: $(STORAGE_ACCOUNT_NAME)
+        STORAGE_CONTAINER_NAME: $(STORAGE_CONTAINER_NAME)
+
+    - task: AzurePowerShell@5
+      displayName: Update key vault secrets
+      inputs:
+        azureSubscription: "AZU-ADO_DEFAULT_SVCCONN"
+        scriptType: 'FilePath'
+        scriptPath: '$(System.DefaultWorkingDirectory)/scheduler/update-hostpool-key.ps1'
+        azurePowerShellVersion: 'latestVersion' 
+        FailOnStandardError: true
+        errorActionPreference: 'stop'
+      env:
+        KeyVaultName: $(KeyVaultName)
+        SubscriptionId: $(SubscriptionId)
