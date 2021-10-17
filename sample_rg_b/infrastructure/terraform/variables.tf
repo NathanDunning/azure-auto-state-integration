@@ -18,14 +18,17 @@ variable "availability_set_name" {
   description = "Name of availability set"
 }
 
-variable "admin_username" {
+variable "workspace_name" {
   type        = string
-  description = "Admin username"
-  sensitive   = true
+  description = "Name of workspace"
 }
 
-variable "admin_password" {
+variable "host_pool_name" {
   type        = string
-  description = "Admin password"
-  sensitive   = true
+  description = "Name of host pool"
+}
+
+variable "application_group_name" {
+  type        = string
+  description = "Name of application group"
 }
